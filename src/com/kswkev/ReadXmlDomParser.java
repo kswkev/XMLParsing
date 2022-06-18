@@ -12,6 +12,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReadXmlDomParser {
 
@@ -76,6 +78,66 @@ public class ReadXmlDomParser {
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    public static Company parseCompanyXML(String filename) {
+
+        List<Staff> staff = new ArrayList<>();
+
+        // Instantiate the Factory
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+        try {
+
+            // optional, but recommended
+            // process XML securely, avoid attacks like XML External Entities (XXE)
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
+            // parse XML file
+            DocumentBuilder db = dbf.newDocumentBuilder();
+
+            Document doc = db.parse(new File(filename));
+
+            // optional, but recommended
+            // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+            doc.getDocumentElement().normalize();
+
+            // get <staff>
+            NodeList list = doc.getElementsByTagName("staff");
+
+            for (int temp = 0; temp < list.getLength(); temp++) {
+
+                Node node = list.item(temp);
+
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element element = (Element) node;
+
+                    // get staff's attribute
+                    int id = Integer.parseInt(element.getAttribute("id"));
+
+                    // get text
+                    String firstname = element.getElementsByTagName("firstname").item(0).getTextContent();
+                    String lastname = element.getElementsByTagName("lastname").item(0).getTextContent();
+                    String nickname = element.getElementsByTagName("nickname").item(0).getTextContent();
+
+                    NodeList salaryNodeList = element.getElementsByTagName("salary");
+                    long salary = Long.parseLong(salaryNodeList.item(0).getTextContent());
+
+                    // get salary's attribute
+                    String currency = salaryNodeList.item(0).getAttributes().getNamedItem("currency").getTextContent();
+
+                    staff.add(new Staff(id, firstname, lastname, nickname, new Salary(currency, salary)));
+
+                }
+            }
+
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            e.printStackTrace();
+        }
+
+        return new Company(staff);
 
     }
 
